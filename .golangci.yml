@@ -1,0 +1,9 @@
+linters-settings:
+  govet:
+    enable: true
+  staticcheck:
+    enable: true
+
+run:
+  skip-dirs:
+    - vendor
