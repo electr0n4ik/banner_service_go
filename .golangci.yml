@@ -2,64 +2,75 @@
 run:
   # Время ожидания до прерывания анализа (5 минут достаточно для больших проектов)
   timeout: 5m
-  
+
   # Режим загрузки модулей: 'readonly' - только для чтения, предотвращает изменения в go.mod
   modules-download-mode: readonly
-  
+
   # Директории для игнорирования (например, сторонние библиотеки)
   skip-dirs:
     - vendor
+  # Файлы для игнорирования (добавляем типичные)
+  skip-files:
+    - ".*\\.pb\\.go$"
+    - ".*_mock\\.go$"
 
 # linters: Настройки включения/выключения конкретных линтеров
 linters:
   # Сначала отключаем все линтеры (чистый лист)
   disable-all: true
-  
+
   # Включаем только нужные линтеры (топ-5 для старта)
   enable:
-    - gosimple      # Проверяет возможность упрощения кода (S1000+ правил)
-    - govet         # Официальный анализатор Go (проверяет корректность кода)
-    - staticcheck   # Находит баги и антипаттерны (SA* правила)
-    - unused        # Обнаруживает неиспользуемый код (U1000)
-    - errcheck      # Проверяет обработку ошибок (обязателен для Go)
-    - gofmt         # Проверяет форматирование кода (соответствие go fmt)
-    - goimports     # Проверяет сортировку импортов
+    - gosimple # Проверяет возможность упрощения кода (S1000+ правил)
+    - govet # Официальный анализатор Go (проверяет корректность кода)
+    - staticcheck # Находит баги и антипаттерны (SA* правила)
+    - unused # Обнаруживает неиспользуемый код (U1000)
+    - errcheck # Проверяет обработку ошибок (обязателен для Go)
+    - gofmt # Проверяет форматирование кода (соответствие go fmt)
+    - goimports # Проверяет сортировку импортов
 
   # Дополнительные настройки для конкретных линтеров
   linters-settings:
     gosimple:
       # Включить все проверки gosimple (можно точечно отключать)
       checks: ["all"]
-    
+
     goimports:
       # Разрешить локальные импорты (внутри проекта)
-      local-prefixes: github.com/yourname/banner_service_go
+      # local-prefixes: github.com/yourname/banner_service_go
+
+    errcheck:
+      ignore: fmt:.*
 
 # issues: Настройки обработки найденных проблем
 issues:
-  # Не использовать стандартные исключения (проверять всё)
-  exclude-use-default: false
-  
+  # Использовать стандартные исключения
+  exclude-use-default: true
+
   # Максимальное количество ошибок на линтер (0 = без ограничений)
-  max-issues-per-linter: 0
-  
+  max-issues-per-linter: 50
+
   # Максимальное количество одинаковых ошибок (0 = без ограничений)
-  max-same-issues: 0
-  
+  max-same-issues: 10
+
   # Исключения (можно добавлять конкретные ошибки)
   exclude:
-    - "G104" # Игнорировать предупреждения о необработанных ошибках
-    
+    - "G104: Игнорировать предупреждения о необработанных ошибках"
+    - "G204: Subprocess launched with variable"
+
+  # Исключаем проверки для тестовых файлов
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - errcheck
+        - gosec
+
 # output: Настройки формата вывода
 output:
   # Формат вывода: friendly - человекочитаемый, colored - с подсветкой
-  format: friendly
-  colored-output: true
-  
-  # Сортировать проблемы по: 
-  #   severity - важности, 
-  #   path - пути к файлу, 
-  #   line - номеру строки
+  # format: friendly
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  uniq-by-line: true
   sort-results: true
-  sort-order: ["severity", "path", "line"]
-  

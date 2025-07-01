@@ -1,9 +1,14 @@
-name: CI/CD Pipeline
+name: CI
 
-on: [push]
+on: 
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [dev]
 
 jobs:
   test:
+    name: Test
     runs-on: ubuntu-latest
     services:
       postgres:
@@ -24,8 +29,7 @@ jobs:
         ports: ["6379:6379"]
     
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
       
     - name: Setup Go
       uses: actions/setup-go@v4
@@ -36,16 +40,32 @@ jobs:
       run: |
         go test -v -coverprofile=coverage.out ./...
         go tool cover -func=coverage.out
+    - name: Run lint
+      run: golangci-lint run
+        if [ ! -f go.mod ]; then
+            go mod init banner_service_go
+          fi
+          go mod tidy
 
   lint:
+    name: Lint
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - name: Run golangci-lint
+    - name: Initialize Go modules
+      run: |
+        if [ ! -f go.mod ]; then
+          go mod init banner_service_go
+        fi
+        go mod tidy
+
+      
+    - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
       with:
-        version: v1.55
-        args: --config=.golangci.yml
+        version: latest
+        skip-cache: true
+        args: --timeout=10m --verbose
 
   build:
     runs-on: ubuntu-latest
