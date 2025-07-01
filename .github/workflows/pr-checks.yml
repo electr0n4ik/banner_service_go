@@ -1,0 +1,36 @@
+name: PR Quality Gate
+
+on:
+  pull_request:
+    branches: [dev] # Активируется только для PR в ветку dev
+    types: [opened, synchronize, reopened]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.24"
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: v1.64.2
+          args: --config=.golangci.yml ./...
+
+      - name: Run tests
+        run: go test -v -race ./...
+        # проверка актуальности ветки
+      # - name: Check for rebase need
+      #   run: |
+      #     if [ "$(git rev-list --count origin/dev..HEAD)" -ne 0 ]; then
+      #       echo "::error::Branch is out of date with dev! Please rebase."
+      #       exit 1
+      #     fi
