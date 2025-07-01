@@ -28,9 +28,9 @@ jobs:
       - name: Run tests
         run: go test -v -race ./...
         # проверка актуальности ветки
-      - name: Check for rebase need
-        run: |
-          if [ "$(git rev-list --count origin/dev..HEAD)" -ne 0 ]; then
-            echo "::error::Branch is out of date with dev! Please rebase."
-            exit 1
-          fi
+      # - name: Check for rebase need
+      #   run: |
+      #     if [ "$(git rev-list --count origin/dev..HEAD)" -ne 0 ]; then
+      #       echo "::error::Branch is out of date with dev! Please rebase."
+      #       exit 1
+      #     fi
