@@ -36,34 +36,34 @@ jobs:
       with:
         go-version: '1.24.4'
         
+    - name: Initialize modules
+      run: |
+        go mod tidy
+        
     - name: Run tests
       run: |
         go test -v -coverprofile=coverage.out ./...
         go tool cover -func=coverage.out
-    - name: Run lint
-      run: golangci-lint run
-        if [ ! -f go.mod ]; then
-            go mod init banner_service_go
-          fi
-          go mod tidy
 
   lint:
     name: Lint
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24.4'
+    
     - name: Initialize Go modules
       run: |
-        if [ ! -f go.mod ]; then
-          go mod init banner_service_go
-        fi
         go mod tidy
-
       
     - name: golangci-lint
       uses: golangci/golangci-lint-action@v3
       with:
-        version: latest
+        version: v2.2.1
         skip-cache: true
         args: --timeout=10m --verbose
 
@@ -72,5 +72,11 @@ jobs:
     needs: [test, lint]
     steps:
     - uses: actions/checkout@v4
+    
+    - name: Setup Go
+      uses: actions/setup-go@v4
+      with:
+        go-version: '1.24.4'
+        
     - name: Build Docker image
       run: docker build -t banner-service .
