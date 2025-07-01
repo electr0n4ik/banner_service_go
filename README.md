@@ -34,3 +34,21 @@ banner-service-go/
 ```
 docker-compose run --rm app go run scripts/migrate.go
 ```
+
+```
+Линтер	Решаемые проблемы	Важность для Junior
+govet	Корректность кода	★★★★★ (обязателен)
+errcheck	Необработанные ошибки	★★★★★
+gosimple	Упрощение кода	★★★★☆
+staticcheck	Находит реальные баги	★★★★☆
+unused	Удаление мертвого кода	★★★☆☆
+gofmt	Единый стиль кода	★★★★★
+goimports	Сортировка импортов	★★★★☆
+```
+
+Сводный отчет линтера:
+
+```
+golangci-lint run --out-format=tab
+```
+
