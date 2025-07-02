@@ -1,0 +1,30 @@
+name: Deploy to Local Machine
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: banner_service_go # 👈 обязательно добавляем это!
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Run deployment script
+        run: |
+          ssh -o StrictHostKeyChecking=no \
+              -p "${{ secrets.SSH_PORT }}" \
+              "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}" \
+              "/home/userdev/go/src/banner_service_go/scripts/deploy.sh"
+
+      - name: Проверка сервера
+        run: |
+          curl -I http://${{ secrets.SSH_HOST }}:${{ secrets.SERVICE_PORT }}
