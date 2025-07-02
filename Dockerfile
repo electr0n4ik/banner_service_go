@@ -8,6 +8,6 @@ RUN if [ -f go.mod ]; then \
       go mod init banner_service_go; \
     fi
 FROM alpine:latest
-COPY --from=builder /banner-service .
+COPY --from=builder /app /app
 EXPOSE 8080
 CMD ["./banner-service"]
