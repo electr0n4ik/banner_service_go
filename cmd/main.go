@@ -1,19 +1,20 @@
 package main
 
 import (
-	"fmt"
 	"log"
+	"net/http"
+
+	deliveryhttp "banner_service_go/internal/delivery"
 )
 
 func main() {
-	fmt.Println("Banner Service Go")
+	// Регистрация обработчиков HTTP-запросов
+	http.HandleFunc("/", deliveryhttp.HelloHandler)
 
-	if err := run(); err != nil {
-		log.Fatal(err)
+	// Запуск сервера
+	port := ":8080"
+	log.Printf("Server started on port %s", port)
+	if err := http.ListenAndServe(port, nil); err != nil {
+		log.Fatalf("Server error: %v", err)
 	}
-}
-
-func run() error {
-	// Здесь будет основная логика приложения
-	return nil
 }
