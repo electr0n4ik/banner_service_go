@@ -7,9 +7,7 @@ RUN if [ -f go.mod ]; then \
       echo "❌ go.mod not found! Initializing new module..."; \
       go mod init banner_service_go; \
     fi
-# RUN go build -o /banner-app ./cmd
-
 FROM alpine:latest
-COPY --from=builder /app /app
-# COPY /migrations /migrations
-CMD ["/banner-app"]
+COPY --from=builder /banner-service .
+EXPOSE 8080
+CMD ["./banner-service"]

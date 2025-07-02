@@ -1,6 +1,13 @@
 version: '3.8'
 
 services:
+  banner-service:
+    build: .
+    ports:
+      - "8080:8080"
+    enviroment:
+      - PORT=8080
+
   postgres:
     image: postgres:14
     container_name: banner-postgres
