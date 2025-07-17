@@ -96,6 +96,8 @@ jobs:
       - name: Build Docker image
         run: docker build -t banner-service .
   deploy:
+    environment:
+      name: banner_service_go # 👈 обязательно добавляем это!
     runs-on: ubuntu-latest
     needs: build
     steps:
