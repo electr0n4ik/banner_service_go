@@ -31,6 +31,40 @@ banner-service-go/
 ├── docker-compose.yml    # Локальная разработка
 └── go.mod                # Go-зависимости
 ```
+```shell
+.
+├── backend
+│   ├── cmd
+│   │   └── main.go
+│   ├── configs
+│   │   └── banner.service
+│   ├── go.mod
+│   ├── go.sum
+│   ├── handlers
+│   ├── internal
+│   │   ├── delivery
+│   │   │   └── handler.go
+│   │   ├── domain
+│   │   ├── repository
+│   │   └── service
+│   │       ├── service.go
+│   │       └── service_test.go
+│   ├── migrations
+│   └── models
+├── docker-compose.yml
+├── Dockerfile.backend
+├── Dockerfile.frontend
+├── frontend
+│   ├── index.html
+│   ├── script.js
+│   └── style.css
+├── instructions.md
+├── nginx.conf
+├── README.md
+└── scripts
+    ├── deploy.sh
+    └── setup.sh
+```
 
 Нарисовать дерево проекта:
 

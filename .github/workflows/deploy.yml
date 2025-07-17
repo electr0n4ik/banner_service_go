@@ -45,6 +45,8 @@ jobs:
           go build -v ./...
 
   deploy:
+    environment:
+      name: banner_service_go # 👈 обязательно добавляем это!
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
@@ -59,13 +61,13 @@ jobs:
 
       - name: Add server to known hosts
         run: |
-          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
 
       - name: Deploy to server
         run: |
-          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'EOF'
+          ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
             # Переходим в директорию проекта
-            cd /home/${{ secrets.USERNAME }}/my-go-app || exit 1
+            cd /home/${{ secrets.SSH_USERNAME }}/my-go-app || exit 1
             
             # Останавливаем текущие контейнеры
             docker-compose down || true
@@ -96,9 +98,11 @@ jobs:
 
       - name: Notify about deployment
         run: |
-          echo "Application deployed successfully to http://${{ secrets.HOST }}"
+          echo "Application deployed successfully to http://${{ secrets.SSH_HOST }}"
 
   cleanup:
+    environment:
+      name: banner_service_go # 👈 обязательно добавляем это!
     needs: deploy
     runs-on: ubuntu-latest
     if: always()
@@ -106,7 +110,7 @@ jobs:
     steps:
       - name: Cleanup old Docker images
         run: |
-          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'EOF'
+          ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
             # Удаляем неиспользуемые образы
             docker image prune -f
             
