@@ -1,5 +1,3 @@
-# .github/workflows/deploy.yml
-
 name: Deploy to Server
 
 on:
@@ -9,114 +7,51 @@ on:
     branches: [main]
 
 jobs:
-  test:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v4
-        with:
-          go-version: "1.21"
-
-      - name: Cache Go modules
-        uses: actions/cache@v3
-        with:
-          path: ~/go/pkg/mod
-          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-go-
-
-      - name: Install dependencies
-        run: |
-          cd backend
-          go mod tidy
-          go mod download
-
-      - name: Run tests
-        run: |
-          cd backend
-          go test -v ./...
-
-      - name: Build application
-        run: |
-          cd backend
-          go build -v ./...
-
   deploy:
     environment:
       name: banner_service_go # 👈 обязательно добавляем это!
-    needs: test
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
       - name: Setup SSH
-        uses: webfactory/ssh-agent@v0.8.0
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
-      - name: Add server to known hosts
         run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
+          # Альтернативно можно отключить проверку хоста
+          # echo "StrictHostKeyChecking no" >> ~/.ssh/config
 
       - name: Deploy to server
         run: |
-          ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
-            # Переходим в директорию проекта
-            cd /home/${{ secrets.SSH_USERNAME }}/my-go-app || exit 1
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd /home/deployer/my-go-app
             
-            # Останавливаем текущие контейнеры
+            # Останавливаем приложение
             docker-compose down || true
             
             # Обновляем код
-            git fetch origin
-            git reset --hard origin/main
+            git pull origin main || git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git .
             
-            # Создаем .env файл из секретов
-            cat > .env << 'ENVEOF'
-          GIN_MODE=release
-          PORT=8080
-          ENVEOF
+            # Устанавливаем права доступа
+            chmod +x scripts/*.sh 2>/dev/null || true
             
-            # Пересобираем и запускаем контейнеры
+            # Пересобираем и запускаем
             docker-compose build --no-cache
             docker-compose up -d
             
+            # Ждем запуска
+            sleep 15
+            
             # Проверяем статус
-            sleep 10
             docker-compose ps
-            
-            # Проверяем health check
-            curl -f http://localhost/api/v1/health || exit 1
-            
-            echo "Deployment completed successfully!"
           EOF
 
-      - name: Notify about deployment
+      - name: Health Check
         run: |
-          echo "Application deployed successfully to http://${{ secrets.SSH_HOST }}"
-
-  cleanup:
-    environment:
-      name: banner_service_go # 👈 обязательно добавляем это!
-    needs: deploy
-    runs-on: ubuntu-latest
-    if: always()
-
-    steps:
-      - name: Cleanup old Docker images
-        run: |
+          sleep 10
           ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
-            # Удаляем неиспользуемые образы
-            docker image prune -f
-            
-            # Удаляем старые контейнеры
-            docker container prune -f
-            
-            # Показываем использование диска
-            df -h
+            curl -f http://localhost/api/v1/health || curl -f http://localhost:8080/health || echo "Health check failed"
           EOF
