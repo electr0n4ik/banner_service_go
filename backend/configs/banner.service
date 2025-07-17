@@ -1,0 +1,15 @@
+[Unit]
+Description=Banner Service
+After=network.target postgresql.service redis.service
+
+[Service]
+Type=simple
+User=userdev
+WorkingDirectory=/home/userdev/go/src/banner_service_go
+ExecStart=/home/userdev/go/src/banner_service_go/bin/banner_service
+Restart=always
+RestartSec=5
+EnvironmentFile=/etc/banner_service.env
+
+[Install]
+WantedBy=multi-user.target

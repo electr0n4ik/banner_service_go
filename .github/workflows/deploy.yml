@@ -1,30 +1,118 @@
-name: Deploy to Local Machine
+# .github/workflows/deploy.yml
+
+name: Deploy to Server
 
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
 
 jobs:
-  deploy:
+  test:
     runs-on: ubuntu-latest
-    environment:
-      name: banner_service_go # 👈 обязательно добавляем это!
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Set up SSH
-        uses: webfactory/ssh-agent@v0.9.0
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: "1.21"
+
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          go mod tidy
+          go mod download
+
+      - name: Run tests
+        run: |
+          cd backend
+          go test -v ./...
+
+      - name: Build application
+        run: |
+          cd backend
+          go build -v ./...
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.8.0
         with:
           ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-      - name: Run deployment script
+      - name: Add server to known hosts
         run: |
-          ssh -o StrictHostKeyChecking=no \
-              -p "${{ secrets.SSH_PORT }}" \
-              "${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}" \
-              "/home/userdev/go/src/banner_service_go/scripts/deploy.sh"
+          ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
 
-      - name: Проверка сервера
+      - name: Deploy to server
         run: |
-          curl -I http://${{ secrets.SSH_HOST }}:${{ secrets.SERVICE_PORT }}
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'EOF'
+            # Переходим в директорию проекта
+            cd /home/${{ secrets.USERNAME }}/my-go-app || exit 1
+            
+            # Останавливаем текущие контейнеры
+            docker-compose down || true
+            
+            # Обновляем код
+            git fetch origin
+            git reset --hard origin/main
+            
+            # Создаем .env файл из секретов
+            cat > .env << 'ENVEOF'
+          GIN_MODE=release
+          PORT=8080
+          ENVEOF
+            
+            # Пересобираем и запускаем контейнеры
+            docker-compose build --no-cache
+            docker-compose up -d
+            
+            # Проверяем статус
+            sleep 10
+            docker-compose ps
+            
+            # Проверяем health check
+            curl -f http://localhost/api/v1/health || exit 1
+            
+            echo "Deployment completed successfully!"
+          EOF
+
+      - name: Notify about deployment
+        run: |
+          echo "Application deployed successfully to http://${{ secrets.HOST }}"
+
+  cleanup:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+
+    steps:
+      - name: Cleanup old Docker images
+        run: |
+          ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} << 'EOF'
+            # Удаляем неиспользуемые образы
+            docker image prune -f
+            
+            # Удаляем старые контейнеры
+            docker container prune -f
+            
+            # Показываем использование диска
+            df -h
+          EOF
