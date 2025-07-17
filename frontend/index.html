@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Go App</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 My Go Application</h1>
+        
+        <div class="card">
+            <h2>API Status</h2>
+            <div id="status">Loading...</div>
+            <button onclick="checkStatus()">Check Status</button>
+        </div>
+
+        <div class="card">
+            <h2>Echo Test</h2>
+            <input type="text" id="messageInput" placeholder="Enter message">
+            <button onclick="sendEcho()">Send Echo</button>
+            <div id="echoResult"></div>
+        </div>
+
+        <div class="card">
+            <h2>Available Endpoints</h2>
+            <ul>
+                <li><strong>GET</strong> /api/v1/health - Health check</li>
+                <li><strong>GET</strong> /api/v1/status - Application status</li>
+                <li><strong>POST</strong> /api/v1/echo - Echo message</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

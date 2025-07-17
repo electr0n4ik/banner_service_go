@@ -1,8 +1,39 @@
-.env
-bin/
-dist/
+# Binaries
 *.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+backend/main
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
 *.out
-.idea/
-.vscode/
+
+# Dependency directories
 vendor/
+
+# Go workspace file
+go.work
+
+# Environment variables
+.env
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+.dockerignore
