@@ -60,15 +60,31 @@ jobs:
       - name: Fix DNS and restart Docker
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
-            # Перезапускаем системные службы для исправления DNS
-            sudo systemctl restart systemd-resolved
+            # Создаем резервную копию оригинального resolv.conf
+            sudo cp /etc/resolv.conf /etc/resolv.conf.backup
+            
+            # Временно устанавливаем надежные DNS серверы
+            echo 'nameserver 8.8.8.8' | sudo tee /etc/resolv.conf
+            echo 'nameserver 1.1.1.1' | sudo tee -a /etc/resolv.conf
+            
+            # Перезапускаем Docker daemon с новыми DNS настройками
             sudo systemctl restart docker
             
             # Ждем запуска Docker
-            sleep 5
+            sleep 10
+            
+            # Проверяем DNS
+            echo '=== Testing DNS ==='
+            nslookup registry-1.docker.io || echo 'DNS lookup failed'
             
             # Проверяем доступность Docker Hub
-            timeout 30 docker pull hello-world:latest || echo 'Docker Hub connection issue'
+            echo '=== Testing Docker Hub access ==='
+            timeout 60 docker pull hello-world:latest || echo 'Docker Hub connection issue'
+            
+            # Настраиваем Docker daemon для использования внешних DNS
+            echo '{\"dns\": [\"8.8.8.8\", \"1.1.1.1\"]}' | sudo tee /etc/docker/daemon.json
+            sudo systemctl restart docker
+            sleep 10
           "
 
       - name: Deploy application
