@@ -1,3 +1,9 @@
+# Глобальные настройки
+{
+    # Отключаем автоматический HTTPS
+    auto_https off
+}
+
 # Основной сайт
 176.108.250.100:80 {
     # API запросы направляем к backend
@@ -17,8 +23,4 @@
         Access-Control-Allow-Headers "Content-Type, Authorization"
     }
 }
-# Глобальные настройки
-{
-    # Отключаем автоматический HTTPS
-    auto_https off
-}
+
