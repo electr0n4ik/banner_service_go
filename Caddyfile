@@ -1,5 +1,5 @@
 # Основной сайт
-localhost {
+176.108.250.100 {
     # API запросы направляем к backend
     handle /api/* {
         reverse_proxy go-backend:8080
