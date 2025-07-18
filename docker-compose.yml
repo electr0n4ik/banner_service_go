@@ -27,7 +27,7 @@ services:
 
   frontend:
     build:
-      context: .
+      context: ./frontend
       dockerfile: Dockerfile.frontend
       args:
         build_folder: ./frontend  # Передаем путь к файлам
