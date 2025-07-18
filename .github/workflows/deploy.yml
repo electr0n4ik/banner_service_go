@@ -28,11 +28,11 @@ jobs:
 
       - name: Deploy to server
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'OUTER_EOF'
             cd /home/deployer/my-go-app\
 
             # Создаем .env файл
-            cat > .env << 'EOF'
+            cat > .env << 'INNER_EOF'
               JWT_SECRET=${{ secrets.JWT_SECRET }}
               # DB_HOST=localhost
               # DB_PORT=5432
@@ -40,7 +40,7 @@ jobs:
               # DB_USER=postgres
               # DB_PASSWORD=12345
               # на будущее другие переменные
-            EOF
+            INNER_EOF
 
             # Исправляем DNS для Docker
             sudo systemctl restart docker
@@ -69,7 +69,7 @@ jobs:
             
             # Проверяем статус
             docker-compose ps
-          EOF
+          OUTER_EOF
 
       - name: Health Check
         run: |
