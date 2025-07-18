@@ -30,6 +30,13 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd /home/deployer/my-go-app
+            # Исправляем DNS для Docker
+            udo systemctl restart docker
+            # Или попробуйте перезапустить systemd-resolved
+            # sudo systemctl restart systemd-resolved
+            
+            # Проверяем DNS
+            # nslookup registry-1.docker.io
 
             # Полная остановка и очистка
             docker-compose down --rmi all --volumes --remove-orphans
