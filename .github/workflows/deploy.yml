@@ -65,7 +65,7 @@ jobs:
             cd /home/deployer/my-go-app
             git status
             git log -1
-            ls -l index.html
+            ls -l ./frontend/index.html
           EOF
       - name: Copy project to server
         run: |
