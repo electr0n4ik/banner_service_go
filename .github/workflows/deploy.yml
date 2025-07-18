@@ -59,3 +59,14 @@ jobs:
           ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
             curl -f http://localhost/api/v1/health || curl -f http://localhost:8080/health || echo "Health check failed"
           EOF
+      - name: Check current files
+        run: |
+          ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+            cd /home/deployer/my-go-app
+            git status
+            git log -1
+            ls -l index.html
+          EOF
+      - name: Copy project to server
+        run: |
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/deployer/my-go-app/
