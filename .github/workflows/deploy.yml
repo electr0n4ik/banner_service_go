@@ -13,11 +13,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: git pull
-        run:
-          # Обновляем код
-          git pull origin main || git clone https://github.com/electr0n4ik/banner_service_go.git .
-
       - uses: actions/checkout@v4
 
       - name: Setup SSH
@@ -26,11 +21,10 @@ jobs:
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
           chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
-          # Альтернативно можно отключить проверку хоста
-          # echo "StrictHostKeyChecking no" >> ~/.ssh/config
-      # - name: Copy project to server
-      #   run: |
-      #     rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/deployer/my-go-app/
+
+      - name: Copy project to server
+        run: |
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/deployer/my-go-app/
 
       - name: Deploy to server
         run: |
@@ -43,15 +37,9 @@ jobs:
             
             # Создаем сеть, если её нет
             docker network create app-network || true
-            
-            # Обновляем код
-            # git pull origin main || git clone https://github.com/electr0n4ik/banner_service_go.git .
-            
+
             # Устанавливаем права доступа
             chmod +x scripts/*.sh 2>/dev/null || true
-            
-            docker-compose rm -sf frontend  # Принудительно удаляет контейнер
-            docker rmi $(docker images | grep frontend | awk '{print $3}')  # Удаляет старый образ
             
             # Пересобираем и запускаем
             docker-compose build --no-cache
@@ -62,7 +50,6 @@ jobs:
             
             # Проверяем статус
             docker-compose ps
-            docker network inspect app-network
           EOF
 
       - name: Health Check
