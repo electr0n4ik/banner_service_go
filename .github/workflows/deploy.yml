@@ -32,11 +32,12 @@ jobs:
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd /home/deployer/my-go-app
 
+            # Полная остановка и очистка
+            docker-compose down --rmi all --volumes --remove-orphans
+            docker system prune -af
+            
             # Создаем сеть, если её нет
             docker network create app-network || true
-            
-            # Останавливаем приложение
-            docker-compose down || true
             
             # Обновляем код
             git pull origin main || git clone https://github.com/electr0n4ik/banner_service_go.git .
