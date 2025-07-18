@@ -13,8 +13,9 @@ services:
     environment:
       - GIN_MODE=release
       - PORT=8080
-    env_file:
-      - .env
+      # - DATABASE_URL=${DATABASE_URL}
+    # env_file:
+    #   - .env
     ports:
       - "8080:8080"
     networks:
