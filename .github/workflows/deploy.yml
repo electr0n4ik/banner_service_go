@@ -29,7 +29,19 @@ jobs:
       - name: Deploy to server
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
-            cd /home/deployer/my-go-app
+            cd /home/deployer/my-go-app\
+
+            # Создаем .env файл
+            cat > .env << 'ENVEOF'
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            # DB_HOST=localhost
+            # DB_PORT=5432
+            # DB_NAME=banner_service
+            # DB_USER=postgres
+            # DB_PASSWORD=12345
+            # на будущее другие переменные
+            ENVEOF
+
             # Исправляем DNS для Docker
             udo systemctl restart docker
             # Или попробуйте перезапустить systemd-resolved
