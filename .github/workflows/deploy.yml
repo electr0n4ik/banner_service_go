@@ -33,17 +33,17 @@ jobs:
 
             # Создаем .env файл
             cat > .env << 'ENVEOF'
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            # DB_HOST=localhost
-            # DB_PORT=5432
-            # DB_NAME=banner_service
-            # DB_USER=postgres
-            # DB_PASSWORD=12345
-            # на будущее другие переменные
+              JWT_SECRET=${{ secrets.JWT_SECRET }}
+              # DB_HOST=localhost
+              # DB_PORT=5432
+              # DB_NAME=banner_service
+              # DB_USER=postgres
+              # DB_PASSWORD=12345
+              # на будущее другие переменные
             ENVEOF
 
             # Исправляем DNS для Docker
-            udo systemctl restart docker
+            sudo systemctl restart docker
             # Или попробуйте перезапустить systemd-resolved
             # sudo systemctl restart systemd-resolved
             
