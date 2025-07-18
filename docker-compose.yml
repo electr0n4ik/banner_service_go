@@ -29,6 +29,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.frontend
+      args:
+        build_folder: ./frontend  # Передаем путь к файлам
     deploy:
       resources:
         limits:
