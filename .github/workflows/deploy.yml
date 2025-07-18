@@ -42,7 +42,7 @@ jobs:
             chmod +x scripts/*.sh 2>/dev/null || true
             
             # Пересобираем и запускаем
-            docker-compose build
+            docker-compose build --no-cache
             docker-compose up -d
             
             # Ждем запуска
