@@ -1,100 +1,86 @@
-* {
+/* Космический фон */
+body, html {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
-    padding: 20px;
-}
-
-.container {
-    max-width: 800px;
-    margin: 0 auto;
-}
-
-h1 {
-    text-align: center;
+    height: 100%;
+    overflow-x: hidden;
+    font-family: 'Segoe UI', sans-serif;
     color: white;
-    margin-bottom: 30px;
-    font-size: 2.5em;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+}
+
+.background {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    background: black;
+    background-image: radial-gradient(white 1px, transparent 1px);
+    background-size: 3px 3px;
+    animation: moveStars 60s linear infinite;
+    z-index: -2;
+}
+
+@keyframes moveStars {
+    from {
+        background-position: 0 0;
+    }
+    to {
+        background-position: 1000px 1000px;
+    }
+}
+
+/* Приветствие */
+.greeting {
+    position: absolute;
+    top: 30%;
+    width: 100%;
+    text-align: center;
+    z-index: 2;
+}
+
+.greeting h1 {
+    font-size: 3rem;
+    color: #00ffff;
+    text-shadow: 0 0 10px #0ff, 0 0 20px #0ff;
+}
+
+/* Контейнер API */
+.container {
+    max-width: 600px;
+    margin: 60vh auto 0;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(0,255,255,0.3);
+    z-index: 1;
+    position: relative;
 }
 
 .card {
-    background: white;
-    border-radius: 15px;
-    padding: 25px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255,255,255,0.2);
-}
-
-h2 {
-    color: #333;
-    margin-bottom: 15px;
-    font-size: 1.5em;
+    padding: 15px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.1);
 }
 
 button {
-    background: linear-gradient(45deg, #667eea, #764ba2);
-    color: white;
+    padding: 8px 16px;
+    margin-top: 10px;
+    background-color: #00ffff;
     border: none;
-    padding: 12px 24px;
-    border-radius: 8px;
+    color: black;
+    border-radius: 5px;
     cursor: pointer;
-    font-size: 14px;
-    transition: all 0.3s ease;
-    margin: 10px 5px;
+    transition: background 0.3s ease;
 }
 
 button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    background-color: #00bbbb;
 }
 
 input {
-    width: 100%;
-    padding: 12px;
-    border: 2px solid #ddd;
-    border-radius: 8px;
-    font-size: 16px;
-    margin-bottom: 10px;
-    transition: border-color 0.3s ease;
-}
-
-input:focus {
-    outline: none;
-    border-color: #667eea;
-}
-
-#status, #echoResult {
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 8px;
-    margin: 15px 0;
-    font-family: monospace;
-    font-size: 14px;
-    border-left: 4px solid #667eea;
-}
-
-ul {
-    list-style: none;
-    padding: 0;
-}
-
-li {
-    padding: 10px;
-    background: #f8f9fa;
-    margin: 5px 0;
-    border-radius: 5px;
-    border-left: 4px solid #28a745;
-}
-
-strong {
-    color: #667eea;
+    padding: 6px;
+    border-radius: 4px;
+    border: none;
+    width: 70%;
 }
