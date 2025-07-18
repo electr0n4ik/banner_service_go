@@ -23,6 +23,9 @@ jobs:
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
           # Альтернативно можно отключить проверку хоста
           # echo "StrictHostKeyChecking no" >> ~/.ssh/config
+      - name: Copy project to server
+        run: |
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/deployer/my-go-app/
 
       - name: Deploy to server
         run: |
@@ -67,6 +70,3 @@ jobs:
             git log -1
             ls -l ./frontend/index.html
           EOF
-      - name: Copy project to server
-        run: |
-          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/deployer/my-go-app/

@@ -29,8 +29,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile.frontend
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
     container_name: go-frontend
-    restart: unless-stopped
+    restart: always
     ports:
       - "3000:80" # Убираем конфликт с Caddy
     depends_on:
