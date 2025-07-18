@@ -1,0 +1,36 @@
+# Основной сайт
+localhost {
+    # API запросы направляем к backend
+    handle /api/* {
+        reverse_proxy go-backend:8080
+    }
+    
+    # Все остальные запросы к frontend
+    handle {
+        reverse_proxy go-frontend:80
+    }
+    
+    # Настройка CORS
+    header {
+        Access-Control-Allow-Origin "*"
+        Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+        Access-Control-Allow-Headers "Content-Type, Authorization"
+    }
+}
+
+# Для продакшена (замените на ваш домен)
+# yourdomain.com {
+#     handle /api/* {
+#         reverse_proxy go-backend:8080
+#     }
+#     
+#     handle {
+#         reverse_proxy go-frontend:80
+#     }
+#     
+#     header {
+#         Access-Control-Allow-Origin "*"
+#         Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
+#         Access-Control-Allow-Headers "Content-Type, Authorization"
+#     }
+# }

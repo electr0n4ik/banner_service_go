@@ -20,12 +20,12 @@ echo "🛑 Stopping containers..."
 docker-compose down || true
 
 # Очищаем старые образы (опционально)
-echo "🧹 Cleaning up old images..."
-docker system prune -f || true
+# echo "🧹 Cleaning up old images..."
+# docker system prune -f || true
 
 # Собираем новые образы
 echo "🔨 Building new images..."
-docker-compose build --no-cache
+docker-compose build
 
 # Запускаем контейнеры
 echo "🚀 Starting containers..."

@@ -13,13 +13,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
           # Альтернативно можно отключить проверку хоста
           # echo "StrictHostKeyChecking no" >> ~/.ssh/config
@@ -28,18 +28,21 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
             cd /home/deployer/my-go-app
+
+            # Создаем сеть, если её нет
+            docker network create app-network || true
             
             # Останавливаем приложение
             docker-compose down || true
             
             # Обновляем код
-            git pull origin main || git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git .
+            git pull origin main || git clone https://github.com/electr0n4ik/banner_service_go.git .
             
             # Устанавливаем права доступа
             chmod +x scripts/*.sh 2>/dev/null || true
             
             # Пересобираем и запускаем
-            docker-compose build --no-cache
+            docker-compose build
             docker-compose up -d
             
             # Ждем запуска
@@ -47,6 +50,7 @@ jobs:
             
             # Проверяем статус
             docker-compose ps
+            docker network inspect app-network
           EOF
 
       - name: Health Check
