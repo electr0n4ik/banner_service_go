@@ -1,5 +1,5 @@
 # Основной сайт
-176.108.250.100 {
+176.108.250.100:80 {
     # API запросы направляем к backend
     handle /api/* {
         reverse_proxy go-backend:8080
@@ -16,23 +16,9 @@
         Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
         Access-Control-Allow-Headers "Content-Type, Authorization"
     }
-    # Отключаем автоматический HTTPS для IP
+}
+# Глобальные настройки
+{
+    # Отключаем автоматический HTTPS
     auto_https off
 }
-
-# Для продакшена (замените на ваш домен)
-# yourdomain.com {
-#     handle /api/* {
-#         reverse_proxy go-backend:8080
-#     }
-#     
-#     handle {
-#         reverse_proxy go-frontend:80
-#     }
-#     
-#     header {
-#         Access-Control-Allow-Origin "*"
-#         Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS"
-#         Access-Control-Allow-Headers "Content-Type, Authorization"
-#     }
-# }
