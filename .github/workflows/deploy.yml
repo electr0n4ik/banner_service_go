@@ -9,11 +9,12 @@ on:
 jobs:
   deploy:
     environment:
-      name: banner_service_go # 👈 обязательно добавляем это!
+      name: banner_service_go
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Setup SSH
         run: |
@@ -24,64 +25,156 @@ jobs:
 
       - name: Copy project to server
         run: |
-          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/deployer/my-go-app/
+          rsync -avz --delete \
+            --exclude='.git' \
+            --exclude='*.log' \
+            --exclude='.env' \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/deployer/my-go-app/
 
-      - name: Deploy to server
+      - name: Create environment file
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'OUTER_EOF'
-            cd /home/deployer/my-go-app\
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
+            cd /home/deployer/my-go-app
+            
+            # Удаляем старый .env файл
+            rm -f .env
+            
+            # Создаем новый .env файл
+            echo 'JWT_SECRET=${{ secrets.JWT_SECRET }}' > .env
+            echo 'GIN_MODE=release' >> .env
+            echo 'PORT=8080' >> .env
+            
+            # Добавляем закомментированные переменные для будущего использования
+            echo '# DB_HOST=localhost' >> .env
+            echo '# DB_PORT=5432' >> .env
+            echo '# DB_NAME=banner_service' >> .env
+            echo '# DB_USER=postgres' >> .env
+            echo '# DB_PASSWORD=12345' >> .env
+            
+            # Проверяем содержимое
+            echo '=== Created .env file ==='
+            cat .env
+          "
 
-            # Создаем .env файл
-            cat > .env << 'INNER_EOF'
-              JWT_SECRET=${{ secrets.JWT_SECRET }}
-              # DB_HOST=localhost
-              # DB_PORT=5432
-              # DB_NAME=banner_service
-              # DB_USER=postgres
-              # DB_PASSWORD=12345
-              # на будущее другие переменные
-            INNER_EOF
-
-            # Исправляем DNS для Docker
+      - name: Fix DNS and restart Docker
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
+            # Перезапускаем системные службы для исправления DNS
+            sudo systemctl restart systemd-resolved
             sudo systemctl restart docker
-            # Или попробуйте перезапустить systemd-resolved
-            # sudo systemctl restart systemd-resolved
             
-            # Проверяем DNS
-            # nslookup registry-1.docker.io
-
-            # Полная остановка и очистка
-            docker-compose down --rmi all --volumes --remove-orphans
-            docker system prune -af
+            # Ждем запуска Docker
+            sleep 5
             
-            # Создаем сеть, если её нет
-            docker network create app-network || true
+            # Проверяем доступность Docker Hub
+            timeout 30 docker pull hello-world:latest || echo 'Docker Hub connection issue'
+          "
 
-            # Устанавливаем права доступа
+      - name: Deploy application
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
+            cd /home/deployer/my-go-app
+            
+            echo '=== Stopping existing containers ==='
+            docker-compose down --remove-orphans
+            
+            echo '=== Cleaning up old images ==='
+            docker system prune -f
+            docker image prune -f
+            
+            echo '=== Creating network ==='
+            docker network create app-network 2>/dev/null || echo 'Network already exists'
+            
+            echo '=== Setting permissions ==='
             chmod +x scripts/*.sh 2>/dev/null || true
             
-            # Пересобираем и запускаем
-            docker-compose build --no-cache
+            echo '=== Building and starting containers ==='
+            docker-compose build --no-cache --pull
             docker-compose up -d
             
-            # Ждем запуска
-            sleep 15
-            
-            # Проверяем статус
-            docker-compose ps
-          OUTER_EOF
+            echo '=== Waiting for services to start ==='
+            sleep 20
+          "
 
-      - name: Health Check
+      - name: Verify deployment
         run: |
-          sleep 10
-          ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
-            curl -f http://localhost/api/v1/health || curl -f http://localhost:8080/health || echo "Health check failed"
-          EOF
-      - name: Check current files
-        run: |
-          ssh ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
             cd /home/deployer/my-go-app
-            git status
-            git log -1
-            ls -l ./frontend/index.html
-          EOF
+            
+            echo '=== Container Status ==='
+            docker-compose ps
+            
+            echo '=== Network Status ==='
+            docker network ls | grep app-network
+            
+            echo '=== Port Status ==='
+            netstat -tlnp | grep -E ':(80|443|3000|8080)' || echo 'Some ports may not be listening'
+            
+            echo '=== Container Health ==='
+            docker-compose logs --tail=10 backend
+            docker-compose logs --tail=10 frontend
+            docker-compose logs --tail=10 caddy
+          "
+
+      - name: Health checks
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
+            # Ждем полной загрузки
+            sleep 10
+            
+            echo '=== Testing Backend Health ==='
+            curl -f http://localhost:8080/api/v1/health || echo 'Backend health check failed'
+            
+            echo '=== Testing Frontend Direct Access ==='
+            curl -f http://localhost:3000 || echo 'Frontend direct access failed'
+            
+            echo '=== Testing Caddy Proxy ==='
+            curl -f http://localhost:80 || echo 'Caddy proxy failed'
+            
+            echo '=== Testing API through Proxy ==='
+            curl -f http://localhost/api/v1/health || echo 'API through proxy failed'
+          "
+
+      - name: Final status check
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
+            cd /home/deployer/my-go-app
+            
+            echo '=== Final Container Status ==='
+            docker-compose ps
+            
+            echo '=== Disk Usage ==='
+            docker system df
+            
+            echo '=== Environment File ==='
+            cat .env
+            
+            echo '=== Project Files ==='
+            ls -la ./frontend/ | head -10
+            
+            echo '=== Git Status ==='
+            git log -1 --oneline
+            
+            echo '=== Deployment Summary ==='
+            echo 'Frontend: http://localhost:3000 (direct)'
+            echo 'Backend: http://localhost:8080 (direct)'
+            echo 'Proxy: http://localhost:80 (through Caddy)'
+            echo 'API: http://localhost/api/v1/health (through Caddy)'
+          "
+
+      - name: Cleanup on failure
+        if: failure()
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }} "
+            cd /home/deployer/my-go-app
+            
+            echo '=== Failure Cleanup ==='
+            docker-compose logs --tail=50
+            docker-compose down
+            
+            echo '=== System Resources ==='
+            df -h
+            free -h
+            docker system df
+          "
