@@ -32,7 +32,7 @@ jobs:
             cd /home/deployer/my-go-app\
 
             # Создаем .env файл
-            cat > .env << 'ENVEOF'
+            cat > .env << 'EOF'
               JWT_SECRET=${{ secrets.JWT_SECRET }}
               # DB_HOST=localhost
               # DB_PORT=5432
@@ -40,7 +40,7 @@ jobs:
               # DB_USER=postgres
               # DB_PASSWORD=12345
               # на будущее другие переменные
-            ENVEOF
+            EOF
 
             # Исправляем DNS для Docker
             sudo systemctl restart docker
