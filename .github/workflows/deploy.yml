@@ -13,6 +13,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: git pull
+        run:
+          # Обновляем код
+          git pull origin main || git clone https://github.com/electr0n4ik/banner_service_go.git .
+
       - uses: actions/checkout@v4
 
       - name: Setup SSH
@@ -23,9 +28,9 @@ jobs:
           ssh-keyscan -H ${{ secrets.SSH_HOST }} >> ~/.ssh/known_hosts
           # Альтернативно можно отключить проверку хоста
           # echo "StrictHostKeyChecking no" >> ~/.ssh/config
-      - name: Copy project to server
-        run: |
-          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/deployer/my-go-app/
+      # - name: Copy project to server
+      #   run: |
+      #     rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./ ${{ secrets.SSH_USERNAME }}@${{ secrets.SSH_HOST }}:/home/deployer/my-go-app/
 
       - name: Deploy to server
         run: |
@@ -40,7 +45,7 @@ jobs:
             docker network create app-network || true
             
             # Обновляем код
-            git pull origin main || git clone https://github.com/electr0n4ik/banner_service_go.git .
+            # git pull origin main || git clone https://github.com/electr0n4ik/banner_service_go.git .
             
             # Устанавливаем права доступа
             chmod +x scripts/*.sh 2>/dev/null || true
